@@ -49,7 +49,17 @@ ecbuild_add_option( FEATURE WARNINGS
                     DEFAULT ON
                     DESCRIPTION "Add warnings to compiler" )
 
+
+ecbuild_add_option(FEATURE ECCODES
+                    DEFAULT OFF 
+                    DESCRIPTION " Compile with ECCODES AND GRIB_API_INTERFACE.F90" )        
+
 ecbuild_find_package( NAME Realtime QUIET )
+
+# 
+if(HAVE_ECCODES)    
+find_package(eccodes REQUIRED)
+endif()
 
 ### Sources
 

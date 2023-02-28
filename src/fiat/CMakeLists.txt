@@ -44,6 +44,11 @@ endif()
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/library/version.c.in ${CMAKE_CURRENT_BINARY_DIR}/version.c @ONLY )
 
 ecbuild_list_add_pattern( LIST fiat_src GLOB *.c *.F* *.cc )
+
+if( NOT ENABLE_ECCODES)
+   list(REMOVE_ITEM fiat_src eccode/grib_api_interface.F90 )
+endif()
+
 set( fiat_src ${fiat_src} PARENT_SCOPE )
 
 ecbuild_add_library( TARGET fiat
@@ -64,6 +69,28 @@ ecbuild_add_library( TARGET fiat
         $<INSTALL_INTERFACE:include>
         $<INSTALL_INTERFACE:include/fiat>
 )
+
+if(HAVE_ECCODES)
+ target_include_directories(fiat PUBLIC ${ECCODES_INCLUDE_DIR})
+ target_link_libraries(fiat PUBLIC ${ECCODES})
+ target_link_libraries(fiat PUBLIC ${ECCODES_F90})
+
+   if(HAVE_DOUBLE_PRECISION) 
+       set(PARKIND_PRECISION "dp")
+   elseif(NOT HAVE_DOUBLE_PRECISION AND HAVE_SINGLE_PRECISION)
+	set(PARKIND_PRECISION "sp")
+   elseif(NOT HAVE_DOUBLE_PRECISION AND NOT HAVE_SINGLE_PRECISION)
+	ecbuild_critical("compiling fiat with eccodes need one of the options -DENABLE_SINGLE_PRECISION or 
+ -DENABLE_DOUBLE_PRECISION activated. active once and try again ")
+   endif()
+
+string(TOLOWER PARKIND_PRECISION ${PARKIND_PRECISION})
+
+ target_link_libraries(fiat PUBLIC parkind_${PARKIND_PRECISION})
+ target_include_directories(fiat PRIVATE ${CMAKE_SOURCE_DIR}/src/parkind)
+
+endif()
+
 
 
 if( ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" )

@@ -1,0 +1,49 @@
+fiat/CMakeLists.txt
+-------------------
+1/ add an option ECCODES
+2/ ajout d'un bloc pour la recherche du package "eccodes" et la 
+   définition de la précision -DPARKIND_PRECISION=dp/sp à choisir pour selectionner le module parkind_dp/sp nécessaire 
+   pour grib_api_interface.F90 
+
+   if(HAVE_ECCODES)
+ find_package(eccodes REQUIRED)
+ set(PARKIND_PRECISION "dp" CACHE STRING "Precision : to choose between : sp(signle precision) and dp(double precision) to compile grib_api_interface" )
+ set_property(CACHE PARKIND_PRECISION PROPERTY STRINGS "dp" "sp")
+   if(NOT PARKIND_PRECISION STREQUAL "dp" AND NOT PARKIND_PRECISION STREQUAL "sp" )
+   ecbuild_warn("You have to choose between 'sp' and 'dp' only
+   dp(Double precision have been choosen)")
+   set(PARKIND_PRECISION "dp")
+   endif()
+ string(TOLOWER ${PARKIND_PRECISION} PARKIND_PRECISION)
+endif()
+
+fiat/cmake:
+----------
+ajout du fichier de configuration Findeccodes.cmake , qui sera utilisée lors de la recherche du package et qui définira les variables eccodes
+
+
+fiat/src/CMakeLists.txt
+-------------------------
+permutation dans l'ordre de compilation entre les repertoire parkind et fiat , afin que grib_api_interface.F90 trouve parkind_${precision}
+
+fiat/src/fiat/CMakeLists.txt
+----------------------------
+
+1/ Bien que la méthode de selection du code source de la library fiat repose sur une sélection exhaustive de tout les formats de préfix .F90 et .c . nous 
+ étions obligé de supprimer grib_api_interface.F90 du code source si l'option ECCODES n'est pas activé. 
+
+if( NOT ENABLE_ECCODES)
+list(REMOVE_ITEM fiat_src eccode/grib_api_interface.F90 )
+endif()
+
+2/ Ajout d'un bloc,si l'option ECCODES est activé,dans le but est de lier fiat au includes et librariees eccodes nécessaire pour compiler grib_api_interface.F90
+ 
+if(HAVE_ECCODES)
+ target_include_directories(fiat PUBLIC ${ECCODES_INCLUDE_DIR})
+ target_link_libraries(fiat PUBLIC ${ECCODES})
+ target_link_libraries(fiat PUBLIC ${ECCODES_F90})
+ target_link_libraries(fiat PUBLIC parkind_${PARKIND_PRECISION})
+ target_include_directories(fiat PRIVATE ${CMAKE_SOURCE_DIR}/src/parkind)
+endif()
+
+
