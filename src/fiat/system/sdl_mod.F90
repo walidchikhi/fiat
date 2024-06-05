@@ -79,7 +79,8 @@ WRITE(0,'(A,I0,A,I0,A)') 'SDL_TRACEBACK [PROC=',IPROC,',THRD=',ITID,'] ... DONE'
 END SUBROUTINE SDL_TRACEBACK
 
 !-----------------------------------------------------------------------------
-SUBROUTINE SDL_SRLABORT
+SUBROUTINE SDL_SRLABORT() bind(C, name="sdl_srlabort_")
+
 
 ! Purpose :
 ! -------
